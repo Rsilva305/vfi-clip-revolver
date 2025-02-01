@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# IDE files
+.vs/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Runtime files
+uploads/*
+!uploads/.gitkeep
+segments/*
+!segments/.gitkeep
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

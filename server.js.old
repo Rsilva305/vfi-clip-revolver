@@ -1,0 +1,110 @@
+const express = require('express');
+const multer = require('multer');
+const ffmpeg = require('fluent-ffmpeg');
+const path = require('path');
+const fs = require('fs');
+
+const app = express();
+const upload = multer({ dest: 'uploads/' });
+
+// Serve static files (frontend)
+app.use(express.static('public'));
+
+// Serve the script.js file from the root directory
+app.use('/script.js', express.static(path.join(__dirname, 'script.js')));
+
+// Serve extracted segments as static files
+app.use('/segments', express.static(path.join(__dirname, 'segments')));
+
+// Route to handle video uploads
+app.post('/upload', upload.array('videos'), async (req, res) => {
+  const files = req.files; // Array of uploaded files
+  const outputDir = path.join(__dirname, 'segments');
+
+  console.log('Received video files:', files);
+
+  // Ensure the output directory exists
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+    console.log('Created output directory:', outputDir);
+  }
+
+  try {
+    // Rename and move uploaded files to the segments directory
+    const segments = files.map((file, index) => {
+      const extension = path.extname(file.originalname); // Get the file extension
+      const newName = `segment_${String(index + 1).padStart(3, '0')}${extension}`; // Generate new name
+      const outputPath = path.join(outputDir, newName);
+      fs.renameSync(file.path, outputPath); // Rename and move the file
+      return `/segments/${newName}`;
+    });
+
+    console.log('Renamed and uploaded segments:', segments);
+
+    // Send segments back to the frontend
+    res.json({ segments });
+  } catch (error) {
+    console.error('Error processing files:', error);
+    res.status(500).json({ error: 'An error occurred while processing the files.' });
+  }
+});
+
+// Route to handle exporting concatenated video
+app.post('/export', express.json(), async (req, res) => {
+  const { segments } = req.body; // Array of segment file paths in desired order
+  const outputDir = path.join(__dirname, 'segments');
+  const outputPath = path.join(outputDir, 'concatenated_output.mp4');
+
+  console.log('Exporting concatenated video...');
+
+  try {
+    // Create a text file listing the segments in order
+    const listFilePath = path.join(outputDir, 'file_list.txt');
+    const listContent = segments.map(segment => `file '${segment.split('/').pop()}'`).join('\n'); // Use relative paths
+    fs.writeFileSync(listFilePath, listContent, 'utf8');
+
+    console.log('Contents of file_list.txt:');
+    console.log(listContent);
+
+    // Concatenate the segments using FFmpeg
+    await new Promise((resolve, reject) => {
+      ffmpeg()
+        .input(path.resolve(listFilePath)) // Use absolute path for file_list.txt
+        .inputOptions('-f concat') // Use the concat demuxer
+        .outputOptions('-c copy') // Copy streams without re-encoding
+        .output(outputPath)
+        .setFfmpegPath('ffmpeg') // Ensure FFmpeg is in your PATH
+        .on('start', (command) => console.log('FFmpeg command:', command))
+        .on('progress', (progress) => console.log('Processing:', progress))
+        .on('end', () => {
+          console.log('Concatenation complete.');
+          resolve();
+        })
+        .on('error', (err) => {
+          console.error('FFmpeg error:', err);
+          reject(err);
+        })
+        .run({ cwd: outputDir }); // Set the working directory to the segments folder
+    });
+
+    // Send the concatenated video file as a response
+    res.download(outputPath, 'concatenated_output.mp4', (err) => {
+      if (err) {
+        console.error('Error sending file:', err);
+        res.status(500).json({ error: 'An error occurred while sending the file.' });
+      }
+      // Clean up the concatenated file after sending
+      fs.unlinkSync(outputPath);
+      console.log('Cleaned up concatenated video file:', outputPath);
+    });
+  } catch (error) {
+    console.error('Error exporting video:', error);
+    res.status(500).json({ error: 'An error occurred while exporting the video.' });
+  }
+});
+
+// Start the server
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
