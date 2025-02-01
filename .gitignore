@@ -1,3 +1,7 @@
+# Remove everything from Git's tracking
+git rm -r --cached .
+
+# Create new .gitignore file with video files explicitly ignored
 echo "# Dependencies
 node_modules/
 package-lock.json
@@ -20,4 +24,13 @@ segments/*
 *.mp4
 *.mov
 *.MP4
-*.MOV" > .gitignore
+*.MOV
+*.avi
+*.mkv
+*.webm
+*.flv
+*.wmv
+
+# Logs
+*.log
+npm-debug.log*" > .gitignore
