@@ -1,28 +1,24 @@
-# Dependencies
-node_modules/
-
-# IDE files
-.vs/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Runtime files
-uploads/*
-!uploads/.gitkeep
-segments/*
-!segments/.gitkeep
-
-# Logs
-logs
-*.log
-npm-debug.log*
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+echo # Dependencies > .gitignore
+echo node_modules/ >> .gitignore
+echo # IDE files >> .gitignore
+echo .vs/ >> .gitignore
+echo *.suo >> .gitignore
+echo *.ntvs* >> .gitignore
+echo *.njsproj >> .gitignore
+echo *.sln >> .gitignore
+echo *.sw? >> .gitignore
+echo # Runtime files >> .gitignore
+echo uploads/* >> .gitignore
+echo !uploads/.gitkeep >> .gitignore
+echo segments/* >> .gitignore
+echo !segments/.gitkeep >> .gitignore
+echo # Logs >> .gitignore
+echo logs >> .gitignore
+echo *.log >> .gitignore
+echo npm-debug.log* >> .gitignore
+echo # Environment variables >> .gitignore
+echo .env >> .gitignore
+echo .env.local >> .gitignore
+echo .env.development.local >> .gitignore
+echo .env.test.local >> .gitignore
+echo .env.production.local >> .gitignore
